@@ -1,38 +1,15 @@
 /*
-Bootcamp de Data Analytics, IT Academy (Barcelona Activa)
-Sprint 2: Bases de datos relacionales con MySQL
-Alumno: Pedro Tubin (linkedin.com/in/pedrotubin)
-Mentor: Dagoberto Itriago
-Noviembre de 2026
-
-Ejecución:
-- Ejecutar el script en orden, de arriba abajo.
-- En los puntos indicados con un comentario hay que ejecutar los archivos de datos
-  del enunciado: N1-Ex.1__dades_introduir.sql y N1-Ex.4__datos_introducir_credit.sql.
-- Las sentencias LOAD DATA (N1 Ex8 y N3 Ex2) usan la ruta '/ruta/a/los/archivos/'.
-  Sustituirla por la carpeta donde estén los CSV.
-- La conexión de Workbench necesita la opción OPT_LOCAL_INFILE=1.
-- Criterio general: una transacción solo cuenta como venta si declined = 0.
+Nivel 1 - Ejercicio 1
+A partir de los documentos adjuntos (estructura_dades y dades_introduir), importa las dos tablas.
+Muestra las características principales del esquema creado y explica las diferentes tablas y
+variables que existen. Asegúrate de incluir un diagrama que ilustre la relación entre las
+diferentes tablas y variables.
 */
 
--- ============================================================
--- NIVELL 1
--- ============================================================
-
-/*
-Nivell 1 - Exercici 1
-A partir dels documents adjunts (estructura_dades i dades_introduir), importa les dues taules.
-Mostra les característiques principals de l'esquema creat i explica les diferents taules i
-variables que existeixen. Assegura't d'incloure un diagrama que il·lustri la relació entre les
-diferents taules i variables.
-*/
-
--- Creamos la base de datos
 DROP DATABASE IF EXISTS transactions;
 CREATE DATABASE IF NOT EXISTS transactions;
 USE transactions;
 
--- Creamos la tabla company
 CREATE TABLE IF NOT EXISTS company (
     id           VARCHAR(15) PRIMARY KEY,
     company_name VARCHAR(255),
@@ -42,7 +19,6 @@ CREATE TABLE IF NOT EXISTS company (
     website      VARCHAR(255)
 );
 
--- Creamos la tabla transaction
 CREATE TABLE IF NOT EXISTS transaction (
     id             VARCHAR(255) PRIMARY KEY,
     credit_card_id VARCHAR(15), -- REFERENCES credit_card(id)
@@ -60,60 +36,52 @@ CREATE TABLE IF NOT EXISTS transaction (
 
 
 /*
-Nivell 1 - Exercici 2
-Utilitzant JOIN realitzaràs les següents consultes:
-- Llistat dels països que estan generant vendes.
-- Des de quants països es generen les vendes.
-- Identifica la companyia amb la mitjana més gran de vendes.
+Nivel 1 - Ejercicio 2
+Utilizando JOIN realizarás las siguientes consultas:
+- Listado de los países que están generando ventas.
+- Desde cuántos países se generan las ventas.
+- Identifica la compañía con la mayor media de ventas.
 */
 
 USE transactions;
 
-DROP VIEW IF EXISTS company_transactions_table;
-
-CREATE VIEW company_transactions_table AS
-SELECT
-    t.*,
-    c.company_name,
-    c.phone,
-    c.email,
-    c.country,
-    c.website
-FROM transaction AS t
-JOIN company AS c
-    ON t.company_id = c.id;
-
 -- Países que generan ventas
 SELECT DISTINCT
-    ct.country
-FROM company_transactions_table AS ct
-WHERE ct.declined = 0;
+    c.country
+FROM transaction AS t
+JOIN company AS c
+    ON t.company_id = c.id
+WHERE t.declined = 0;
 
 -- Número de países que generan ventas
 SELECT
-    COUNT(DISTINCT ct.country)
-FROM company_transactions_table AS ct
-WHERE ct.declined = 0;
+    COUNT(DISTINCT c.country) AS country_quantity
+FROM transaction AS t
+JOIN company AS c
+    ON t.company_id = c.id
+WHERE t.declined = 0;
 
 -- Compañía con la media de ventas más alta
 SELECT
-    ct.company_name,
-    ROUND(AVG(ct.amount), 2) AS avg_sales
-FROM company_transactions_table AS ct
-WHERE ct.declined = 0
-GROUP BY ct.company_id
+    c.company_name,
+    ROUND(AVG(t.amount), 2) AS avg_sales
+FROM transaction AS t
+JOIN company AS c
+    ON t.company_id = c.id
+WHERE t.declined = 0
+GROUP BY c.id, c.company_name
 ORDER BY avg_sales DESC
 LIMIT 1;
 
 
 /*
-Nivell 1 - Exercici 3
-Utilitzant només subconsultes (sense utilitzar JOIN):
-- Mostra totes les transaccions realitzades per empreses d'Alemanya.
-- Llista les empreses que han realitzat transaccions per un amount superior a la mitjana de
-  totes les transaccions.
-- Eliminaran del sistema les empreses que no tenen transaccions registrades, entrega el
-  llistat d'aquestes empreses.
+Nivel 1 - Ejercicio 3
+Utilizando solo subconsultas (sin utilizar JOIN):
+- Muestra todas las transacciones realizadas por empresas de Alemania.
+- Lista las empresas que han realizado transacciones por un amount superior a la media de
+  todas las transacciones.
+- Eliminarán del sistema las empresas que no tienen transacciones registradas, entrega el
+  listado de estas empresas.
 */
 
 USE transactions;
@@ -128,8 +96,7 @@ WHERE EXISTS (
     FROM company AS c
     WHERE t.company_id = c.id
         AND c.country = 'Germany'
-)
-    AND t.declined = 0;
+);
 
 -- Empresas con transacciones por encima de la media
 SELECT
@@ -144,9 +111,7 @@ WHERE EXISTS (
             SELECT
                 AVG(t2.amount)
             FROM transaction AS t2
-            WHERE t2.declined = 0
         )
-        AND t.declined = 0
 );
 
 -- Empresas sin transacciones registradas
@@ -162,13 +127,13 @@ WHERE NOT EXISTS (
 
 
 /*
-Nivell 1 - Exercici 4
-La teva tasca és dissenyar i crear una taula anomenada "credit_card" que emmagatzemi detalls
-crucials sobre les targetes de crèdit. La nova taula ha de ser capaç d'identificar de manera
-única cada targeta i establir una relació adequada amb les altres dues taules ("transaction" i
-"company"). Després de crear la taula serà necessari que ingressis la informació del document
-denominat "dades_introduir_credit". Recorda mostrar el diagrama i realitzar una breu
-descripció d'aquest.
+Nivel 1 - Ejercicio 4
+Tu tarea es diseñar y crear una tabla llamada "credit_card" que almacene detalles cruciales
+sobre las tarjetas de crédito. La nueva tabla debe ser capaz de identificar de manera única
+cada tarjeta y establecer una relación adecuada con las otras dos tablas ("transaction" y
+"company"). Después de crear la tabla será necesario que ingreses la información del documento
+denominado "dades_introduir_credit". Recuerda mostrar el diagrama y realizar una breve
+descripción de este.
 */
 
 USE transactions;
@@ -193,10 +158,10 @@ FROM credit_card;
 
 
 /*
-Nivell 1 - Exercici 5
-El departament de Recursos Humans ha identificat un error en el número de compte associat a la
-targeta de crèdit amb ID CcU-2938. La informació que ha de mostrar-se per a aquest registre és:
-TR323456312213576817699999. Recorda mostrar que el canvi es va realitzar.
+Nivel 1 - Ejercicio 5
+El departamento de Recursos Humanos ha identificado un error en el número de cuenta asociado a
+la tarjeta de crédito con ID CcU-2938. La información que debe mostrarse para este registro es:
+TR323456312213576817699999. Recuerda mostrar que el cambio se realizó.
 */
 
 USE transactions;
@@ -219,8 +184,8 @@ WHERE id = 'CcU-2938';
 
 
 /*
-Nivell 1 - Exercici 6
-En la taula "transaction" ingressa una nova transacció amb la següent informació:
+Nivel 1 - Ejercicio 6
+En la tabla "transaction" ingresa una nueva transacción con la siguiente información:
 id:             108B1D1D-5B23-A76C-55EF-C568E49A99DD
 credit_card_id: CcU-9999
 company_id:     b-9999
@@ -261,9 +226,9 @@ WHERE t.id = '108B1D1D-5B23-A76C-55EF-C568E49A99DD';
 
 
 /*
-Nivell 1 - Exercici 7
-Des de recursos humans et sol·liciten eliminar la columna "pan" de la taula credit_card.
-Recorda mostrar el canvi realitzat.
+Nivel 1 - Ejercicio 7
+Desde recursos humanos te solicitan eliminar la columna "pan" de la tabla credit_card.
+Recuerda mostrar el cambio realizado.
 */
 
 USE transactions;
@@ -279,12 +244,12 @@ DESCRIBE credit_card;
 
 
 /*
-Nivell 1 - Exercici 8
-Descarrega els arxius CSV que trobaràs a l'apartat de recursos:
+Nivel 1 - Ejercicio 8
+Descarga los archivos CSV que encontrarás en el apartado de recursos:
 american_users.csv, european_users.csv, companies.csv, credit_cards.csv, transactions.csv
-Estudia'ls i dissenya una base de dades amb un esquema d'estrella que contingui, almenys
-4 taules de les quals puguis realitzar les següents consultes.
-La taula de products.csv l'utilitzarem més endavant.
+Estúdialos y diseña una base de datos con un esquema de estrella que contenga, al menos,
+4 tablas de las que puedas realizar las siguientes consultas.
+La tabla de products.csv la utilizaremos más adelante.
 */
 
 DROP DATABASE IF EXISTS payments_dw;
@@ -293,7 +258,6 @@ USE payments_dw;
 
 SET GLOBAL local_infile = 1;
 
--- Tabla users
 CREATE TABLE IF NOT EXISTS users (
     id           INT PRIMARY KEY,
     name         VARCHAR(255),
@@ -302,6 +266,7 @@ CREATE TABLE IF NOT EXISTS users (
     email        VARCHAR(255),
     birth_date   DATE,
     country      VARCHAR(50),
+    continent    VARCHAR(50),
     city         VARCHAR(50),
     postal_code  VARCHAR(20),
     address      VARCHAR(255),
@@ -317,7 +282,8 @@ INTO TABLE users
     LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (id, name, surname, phone, email, @birth_date, country, city, postal_code, address, signup_date, user_segment, income_band)
-SET birth_date = STR_TO_DATE(@birth_date, '%b %d, %Y');
+SET birth_date = STR_TO_DATE(@birth_date, '%b %d, %Y'),
+    continent  = 'North America';
 
 LOAD DATA LOCAL INFILE '/ruta/a/los/archivos/N1-Ex.8__european_users.csv'
 INTO TABLE users
@@ -326,9 +292,9 @@ INTO TABLE users
     LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (id, name, surname, phone, email, @birth_date, country, city, postal_code, address, signup_date, user_segment, income_band)
-SET birth_date = STR_TO_DATE(@birth_date, '%b %d, %Y');
+SET birth_date = STR_TO_DATE(@birth_date, '%b %d, %Y'),
+    continent  = 'Europe';
 
--- Tabla credit_cards
 CREATE TABLE IF NOT EXISTS credit_cards (
     id                VARCHAR(20) PRIMARY KEY,
     user_id           INT,
@@ -340,7 +306,8 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     track2            VARCHAR(100),
     expiring_date     DATE,
     card_type         VARCHAR(50),
-    card_renewal_flag BOOLEAN
+    card_renewal_flag BOOLEAN,
+    CONSTRAINT fk_card_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 LOAD DATA LOCAL INFILE '/ruta/a/los/archivos/N1-Ex.8__credit_cards.csv'
@@ -352,7 +319,6 @@ IGNORE 1 ROWS
 (id, user_id, iban, pan, pin, cvv, track1, track2, @expiring_date, card_type, card_renewal_flag)
 SET expiring_date = STR_TO_DATE(@expiring_date, '%m/%d/%y');
 
--- Tabla companies
 CREATE TABLE IF NOT EXISTS companies (
     company_id              VARCHAR(20) PRIMARY KEY,
     company_name            VARCHAR(255),
@@ -410,32 +376,13 @@ IGNORE 1 ROWS
 SET product_ids = CONCAT('[', @product_ids, ']'),
     decline_reason = NULLIF(@decline_reason, '');
 
--- Tabla puente transaction_products
-CREATE TABLE IF NOT EXISTS transaction_products (
-    transaction_id VARCHAR(36),
-    product_id     INT,
-    PRIMARY KEY (transaction_id, product_id),
-    CONSTRAINT fk_transaction FOREIGN KEY (transaction_id) REFERENCES transactions_log(id)
-);
-
-INSERT INTO transaction_products
-SELECT
-    tl.id,
-    pj.product_id
-FROM transactions_log AS tl,
-    JSON_TABLE(
-        tl.product_ids,
-        '$[*]' COLUMNS (product_id INT PATH '$')
-    ) AS pj;
-
-ALTER TABLE transactions_log
-    DROP COLUMN product_ids;
+SET GLOBAL local_infile = 0;
 
 
 /*
-Nivell 1 - Exercici 9
-Realitza una subconsulta que mostri tots els usuaris amb més de 80 transaccions utilitzant
-almenys 2 taules.
+Nivel 1 - Ejercicio 9
+Realiza una subconsulta que muestre todos los usuarios con más de 80 transacciones utilizando
+al menos 2 tablas.
 */
 
 USE payments_dw;
@@ -448,16 +395,15 @@ WHERE EXISTS (
         1
     FROM transactions_log AS tl
     WHERE u.id = tl.user_id
-        AND tl.declined = 0
     GROUP BY tl.user_id
     HAVING COUNT(tl.id) > 80
 );
 
 
 /*
-Nivell 1 - Exercici 10
-Mostra la mitjana d'amount per IBAN de les targetes de crèdit a la companyia Donec Ltd,
-utilitza almenys 2 taules.
+Nivel 1 - Ejercicio 10
+Muestra la media de amount por IBAN de las tarjetas de crédito en la compañía Donec Ltd,
+utiliza al menos 2 tablas.
 */
 
 USE payments_dw;
@@ -475,19 +421,14 @@ WHERE EXISTS (
     WHERE tl.business_id = c.company_id
         AND c.company_name = 'Donec Ltd'
 )
-    AND tl.declined = 0
 GROUP BY cc.iban
 ORDER BY avg_amount DESC;
 
 
--- ============================================================
--- NIVELL 2
--- ============================================================
-
 /*
-Nivell 2 - Exercici 1
-Identifica els cinc dies que es va generar la quantitat més gran d'ingressos a l'empresa per
-vendes. Mostra la data de cada transacció juntament amb el total de les vendes.
+Nivel 2 - Ejercicio 1
+Identifica los cinco días en que se generó la mayor cantidad de ingresos en la empresa por
+ventas. Muestra la fecha de cada transacción junto con el total de las ventas.
 */
 
 USE payments_dw;
@@ -503,11 +444,11 @@ LIMIT 5;
 
 
 /*
-Nivell 2 - Exercici 2
-Presenta el nom, telèfon, país, data i amount, d'aquelles empreses que van realitzar
-transaccions amb un valor comprès entre 350 i 400 euros i en alguna d'aquestes dates:
-29 d'abril del 2015, 20 de juliol del 2018 i 13 de març del 2024.
-Ordena els resultats de major a menor quantitat.
+Nivel 2 - Ejercicio 2
+Presenta el nombre, teléfono, país, fecha y amount de aquellas empresas que realizaron
+transacciones con un valor comprendido entre 350 y 400 euros y en alguna de estas fechas:
+29 de abril de 2015, 20 de julio de 2018 y 13 de marzo de 2024.
+Ordena los resultados de mayor a menor cantidad.
 */
 
 USE payments_dw;
@@ -517,23 +458,22 @@ SELECT
     c.company_name,
     c.phone,
     c.country,
-    DATE(tl.transaction_date) AS sale_day,
+    DATE(tl.transaction_date) AS transaction_day,
     tl.amount
 FROM companies AS c
 JOIN transactions_log AS tl
     ON c.company_id = tl.business_id
-WHERE tl.declined = 0
-    AND tl.amount BETWEEN 350 AND 400
+WHERE tl.amount BETWEEN 350 AND 400
     AND DATE(tl.transaction_date) IN ('2015-04-29', '2018-07-20', '2024-03-13')
 ORDER BY tl.amount DESC;
 
 
 /*
-Nivell 2 - Exercici 3
-Necessitem optimitzar l'assignació dels recursos i dependrà de la capacitat operativa que es
-requereixi, per la qual cosa et demanen la informació sobre la quantitat de transaccions que
-realitzen les empreses, però el departament de recursos humans és exigent i vol un llistat de
-les empreses on especifiquis si tenen igual o més de 400 transaccions o menys.
+Nivel 2 - Ejercicio 3
+Necesitamos optimizar la asignación de los recursos y dependerá de la capacidad operativa que
+se requiera, por lo que te piden la información sobre la cantidad de transacciones que
+realizan las empresas, pero el departamento de recursos humanos es exigente y quiere un
+listado de las empresas donde especifiques si tienen igual o más de 400 transacciones o menos.
 */
 
 USE payments_dw;
@@ -541,41 +481,38 @@ USE payments_dw;
 SELECT
     tl.business_id,
     c.company_name,
+    COUNT(tl.id) AS total_transactions,
     CASE
-        WHEN COUNT(tl.id) >= 400 THEN 'High'
-        ELSE 'Low'
-    END AS transactions_category,
-    COUNT(tl.id) AS total_transactions
+        WHEN COUNT(tl.id) >= 400 THEN 'High (400 or more)'
+        ELSE 'Low (fewer than 400)'
+    END AS transaction_volume
 FROM transactions_log AS tl
 JOIN companies AS c
     ON tl.business_id = c.company_id
-WHERE tl.declined = 0
-GROUP BY tl.business_id;
+GROUP BY tl.business_id
+ORDER BY total_transactions DESC;
 
 
 /*
-Nivell 2 - Exercici 4
-Elimina de la taula transaction el registre amb ID 000447FE-B650-4DCF-85DE-C7ED0EE1CAAD de la
-base de dades.
+Nivel 2 - Ejercicio 4
+Elimina de la tabla transaction el registro con ID 000447FE-B650-4DCF-85DE-C7ED0EE1CAAD de la
+base de datos.
 */
 
 USE payments_dw;
-
-DELETE FROM transaction_products
-WHERE transaction_id = '000447FE-B650-4DCF-85DE-C7ED0EE1CAAD';
 
 DELETE FROM transactions_log
 WHERE id = '000447FE-B650-4DCF-85DE-C7ED0EE1CAAD';
 
 
 /*
-Nivell 2 - Exercici 5
-La secció de màrqueting desitja tenir accés a informació específica per a realitzar anàlisi i
-estratègies efectives. S'ha sol·licitat crear una vista que proporcioni detalls clau sobre les
-companyies i les seves transaccions. Serà necessària que creïs una vista anomenada
-VistaMarketing que contingui la següent informació: Nom de la companyia. Telèfon de contacte.
-País de residència. Mitjana de compra realitzat per cada companyia. Presenta la vista creada,
-ordenant les dades de major a menor mitjana de compra.
+Nivel 2 - Ejercicio 5
+La sección de marketing desea tener acceso a información específica para realizar análisis y
+estrategias efectivas. Se ha solicitado crear una vista que proporcione detalles clave sobre
+las compañías y sus transacciones. Será necesario que crees una vista llamada VistaMarketing
+que contenga la siguiente información: Nombre de la compañía. Teléfono de contacto. País de
+residencia. Media de compra realizada por cada compañía. Presenta la vista creada, ordenando
+los datos de mayor a menor media de compra.
 */
 
 USE payments_dw;
@@ -600,16 +537,12 @@ FROM VistaMarketing
 ORDER BY avg_sales DESC;
 
 
--- ============================================================
--- NIVELL 3
--- ============================================================
-
 /*
-Nivell 3 - Exercici 1
-Crea una nova taula que reflecteixi l'estat de les targetes de crèdit basat en si les tres
-últimes transaccions han estat declinades aleshores és inactiu, si almenys una no és rebutjada
-aleshores és actiu. Partint d'aquesta taula respon:
-Quantes targetes estan actives?
+Nivel 3 - Ejercicio 1
+Crea una nueva tabla que refleje el estado de las tarjetas de crédito basado en si las tres
+últimas transacciones han sido declinadas, entonces es inactiva; si al menos una no es
+rechazada, entonces es activa. Partiendo de esta tabla responde:
+¿Cuántas tarjetas están activas?
 */
 
 USE payments_dw;
@@ -620,7 +553,7 @@ CREATE TABLE card_status_table AS
 SELECT
     ol.card_id,
     CASE
-        WHEN SUM(ol.declined) = 3 THEN 'Inactive'
+        WHEN SUM(ol.declined) = COUNT(ol.card_id) THEN 'Inactive'
         ELSE 'Active'
     END AS card_status
 FROM (
@@ -645,16 +578,35 @@ WHERE cs.card_status = 'Active';
 
 
 /*
-Nivell 3 - Exercici 2
-Crea una taula amb la qual puguem unir les dades de l'arxiu de products.csv amb la base de
-dades creada (ja que fins ara no podíem fer-ho), tenint en compte que des de transaction tens
-product_ids. Genera la següent consulta:
-Necessitem conèixer el nombre de vegades que s'ha venut cada producte.
+Nivel 3 - Ejercicio 2
+Crea una tabla con la que podamos unir los datos del archivo products.csv con la base de
+datos creada (ya que hasta ahora no podíamos hacerlo), teniendo en cuenta que desde
+transaction tienes product_ids. Genera la siguiente consulta:
+Necesitamos conocer el número de veces que se ha vendido cada producto.
 */
 
 USE payments_dw;
 
--- Tabla puente transaction_products ya creada en el ejercicio 8 del nivel 1
+-- Tabla puente transaction_products
+CREATE TABLE IF NOT EXISTS transaction_products (
+    transaction_id VARCHAR(36),
+    product_id     INT,
+    PRIMARY KEY (transaction_id, product_id),
+    CONSTRAINT fk_transaction FOREIGN KEY (transaction_id) REFERENCES transactions_log(id)
+);
+
+INSERT INTO transaction_products
+SELECT
+    tl.id,
+    pj.product_id
+FROM transactions_log AS tl,
+    JSON_TABLE(
+        tl.product_ids,
+        '$[*]' COLUMNS (product_id INT PATH '$')
+    ) AS pj;
+
+ALTER TABLE transactions_log
+    DROP COLUMN product_ids;
 
 CREATE TABLE IF NOT EXISTS products (
     id           INT PRIMARY KEY,
@@ -669,6 +621,8 @@ CREATE TABLE IF NOT EXISTS products (
     launch_date  DATE
 );
 
+SET GLOBAL local_infile = 1;
+
 LOAD DATA LOCAL INFILE '/ruta/a/los/archivos/N1-Ex.8__products.csv'
 INTO TABLE products
     FIELDS TERMINATED BY ','
@@ -677,6 +631,8 @@ IGNORE 1 ROWS
 (id, product_name, @price, colour, weight, warehouse_id, category, brand, @cost, launch_date)
 SET price = REPLACE(@price, '$', ''),
     cost  = REPLACE(@cost, '$', '');
+
+SET GLOBAL local_infile = 0;
 
 ALTER TABLE transaction_products
     ADD CONSTRAINT fk_product_id FOREIGN KEY (product_id) REFERENCES products(id);
